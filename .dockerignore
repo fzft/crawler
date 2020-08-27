@@ -1,0 +1,7 @@
+__pycache__
+venv/
+log/core.log.2019*
+chromedriver
+log/seleniumdown/*
+examples/
+tmp/

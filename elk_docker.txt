@@ -1,0 +1,60 @@
+elk_docker部署1
+具体参照官方文档:(https://elk-docker.readthedocs.io/)
+1.拉取镜像 sudo docker pull sebp/elk
+2.启动容器: (es logstash)
+    2.1 sudo docker run -p 5601:5601 -p 9200:9200 -p 5044:5044 -it --name elk sebp/elk
+    (直接启动, 不推荐)
+    2.2 sudo docker run -p 9200:9200 -p 5044:5044 -it \
+    -e ES_HEAP_SIZE="2g" -e LS_HEAP_SIZE="1g" -e TZ="Asia/Shanghai" -v elk-data:/var/lib/elasticsearch -e KIBANA_START=0  --name -d elk sebp/elk
+    (推荐启动方式: TZ指定时区, ES_HEAP_SIZE内存大小, -v 数据卷设置 /var/lib/elasticsearch es 存储数据的容器内路径, 将其挂载到host上以持久化数据)
+
+3.docker ps
+4.设置语言
+    4.1 进入容器 docker exec -it elk /bin/bash
+    4.2 切换到 kibana.yml所在目录 cd  /opt/kibana/config/
+    4.3 添加中文支持 echo "i18n.locale: "zh-CN" " >>  kibana.yml
+    4.4 退出容器 exit
+    4.5 重启容器 docker stop elk && docker start elk
+5.登陆页面  ip:5601
+
+
+
+elk_docker部署2
+docker-compose.yml:
+version: '2.2'
+    services:
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+        container_name: elasticsearch
+        environment:
+          - bootstrap.memory_lock=true
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+        volumes:
+          - host/es_data/path:/usr/share/elasticsearch/data
+        ports:
+          - 9200:9200
+
+   kibana:
+     image: docker.elastic.co/kibana/kibana:6.5.4
+     container_name: kibana
+     environment:
+       ELASTICSEARCH_URL: "http://elasticsearch:9200"
+     ports:
+       - 5601:5601
+     depends_on:
+       - elasticsearch
+
+
+
+
+
+ # Elasticsearch requires your vm.max_map_count set to 262144
+  # Default will be 65530
+  # sysctl -w vm.max_map_count=262144
+  # Add this to /etc/sysctl.conf for making it permanent
+
+

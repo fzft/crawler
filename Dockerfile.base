@@ -1,0 +1,19 @@
+FROM python:3.7.5-alpine
+ENV TZ=Asia/Shanghai
+COPY ./requirements.txt /app/
+WORKDIR /app
+
+RUN apk add  --update --no-cache --virtual  .build-deps gcc musl-dev libxslt-dev libc-dev
+RUN apk add tzdata
+RUN ls /usr/share/zoneinfo
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN echo "Asia/Shanghai" >  /etc/timezone
+
+RUN pip install cython
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install requests
+RUN pip uninstall -y hiredis
+#.build-deps musl-dev
+RUN apk del gcc
+RUN apk add chromium udev ttf-freefont
+

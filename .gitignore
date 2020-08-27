@@ -1,0 +1,11 @@
+venv/
+chromedriver
+log/*
+tmp/
+fabfile.py
+ghostdriver.log
+restart.sh
+restartfore.sh
+.gitlab-ci.yml
+__pycache__/
+.idea/

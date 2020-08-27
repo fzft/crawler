@@ -1,0 +1,26 @@
+# 数据库
+REDIS_HOST = ''
+# REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 8
+REDIS_PWD = '123456'
+# CELERY_DB = 9
+
+MONGO_HOST = ''
+MONGO_PORT = 27017
+MONGO_DB = 'tax'
+MONGO_USERNAME = 'admin'
+MONGO_PASSWORD = '123456'
+MONGO_AUTHSOURCE = 'admin'
+MONGO_AUTHMECHANISM = 'SCRAM-SHA-1'
+
+
+# CHROME_DRIVER = '/Users/fangzhenfutao/PycharmProjects/net_bus/chromedriver'
+
+PUPPETEER_CHROMIUM_PATH = None
+
+ELK_HOST = ''
+ELK_PORT = '9200'
+ELK_INDEX = 'tax_test'
+ELK_USR = ''
+ELK_PWD = ''

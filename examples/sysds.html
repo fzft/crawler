@@ -1,0 +1,846 @@
+
+
+
+
+
+
+
+
+
+
+
+
+<html>
+<head>
+    <title>报表填写</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <link rel="stylesheet" type="text/css" href="https://etax.hunan.chinatax.gov.cn/web-accept//static/css/main/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="https://etax.hunan.chinatax.gov.cn/web-accept//static/css/sbb/iconfont.css">
+    <link rel="stylesheet" type="text/css" href="https://etax.hunan.chinatax.gov.cn/web-accept//static/css/sbb/style.css">
+    <link rel="stylesheet" type="text/css" href="https://etax.hunan.chinatax.gov.cn/web-accept//static/css/sbb/leftmenu.css">
+    <link rel="stylesheet" type="text/css" href="https://etax.hunan.chinatax.gov.cn/web-accept//static/css/sbb/sbbview.css">
+
+    
+    
+<script src="https://etax.hunan.chinatax.gov.cn/web-accept//wssb/static/js.html?ver=A5024C0B7101EF163BB69FCBB0367FD4&p=3&dm=10435"></script><script src="https://etax.hunan.chinatax.gov.cn/web-accept//static/js/layer/layer.js"></script>
+
+    <script>
+        $(function(){
+            
+            openSbb('A200000');
+            
+
+            $("#printBtn").click(preview);
+            $("#exportbtn").click(exportExcel);
+        });
+
+        //点击左边列表切换申报表
+        var currSbb = 'blankdiv';
+        function openSbb(sbbname) {
+            if (sbbname == currSbb) {
+                return;
+            }
+            $("#" + sbbname).css('display', 'block');
+            if (currSbb != null) {
+                $("#" + currSbb).css("display", "none");
+            }
+            currSbb = sbbname;
+            return;
+            //提交当前处于编辑状态的单元格
+            submitCurrSbb();
+        }
+
+        //预览
+        function preview(){
+            if(currSbb==null || currSbb == 'blankdiv')
+                return;
+            var strBodyStyle= "";
+            strBodyStyle="<link rel='stylesheet' type='text/css' href='https://etax.hunan.chinatax.gov.cn/web-accept//static/css/sbb/sbbprint.css'>";
+            var printcnthtml = document.getElementById(currSbb).innerHTML;
+            var xzimgurl = "<img  src=\"https://etax.hunan.chinatax.gov.cn/web-accept//static/css/print/xuanzhong.png\">";
+            var wximgurl = "<img  src=\"https://etax.hunan.chinatax.gov.cn/web-accept//static/css/print/weixuan.png\">";
+            printcnthtml=printcnthtml.replace(/☑/g,xzimgurl);
+            printcnthtml=printcnthtml.replace(/☐/g,wximgurl);
+
+            var _html=strBodyStyle+"<body>"+printcnthtml+"</body>";
+
+            var LODOP=getLodop('https://etax.hunan.chinatax.gov.cn/web-accept//static/print/');
+            LODOP.PRINT_INIT("");
+            var printparas = [{"fbjc":"A200000","sbzlDm":"10435","dyFx":"V","percent":"Auto-Width","left":"20","pdfPercent":"0.75","pdfDyFx":"V"},{"fbjc":"A201010","sbzlDm":"10435","dyFx":"V","pdfPercent":"1","pdfDyFx":"V"},{"fbjc":"A201020","sbzlDm":"10435","dyFx":"H","pdfPercent":"1","pdfDyFx":"H"},{"fbjc":"A201030","sbzlDm":"10435","dyFx":"V","pdfPercent":"1","pdfDyFx":"V"},{"fbjc":"A202000","sbzlDm":"10435","dyFx":"V","pdfPercent":"1","pdfDyFx":"H"},{"fbjc":"jscgdymxxx","sbzlDm":"10435","dyFx":"V","pdfPercent":"0.9","pdfDyFx":"H"},{"fbjc":"xxbgb","sbzlDm":"10435","dyFx":"V","pdfPercent":"1","pdfDyFx":"V"}];
+            var ptobj;
+            for(var i = 0; i<printparas.length;i++)
+            {
+                ptobj = printparas[i];
+                if(ptobj.fbjc == currSbb || (currSbb.indexOf("xxbgb") == 0 && ptobj.fbjc == "xxbgb")){
+                    var top=0;
+                    if(ptobj.top){
+                        top=ptobj.top;
+                    }
+                    var left=20;
+                    if(ptobj.left){
+                        left=left+convertNumber(ptobj.left);
+                    }
+                    //计算A4纸宽度与当前表格的宽度比例
+                    LODOP.ADD_PRINT_HTM(top,left,"100%","100%",_html);
+                    if('H' == ptobj.dyFx){
+                        LODOP.SET_PRINT_PAGESIZE(2,0,0,"CreateCustomPage");
+                        LODOP.SET_SHOW_MODE("LANDSCAPE_DEFROTATED",1);//横向时的正向显示
+                    }else{
+                        LODOP.SET_PRINT_PAGESIZE(3,0,0,"CreateCustomPage");
+                    }
+                    //按照计算比例缩放
+                    if(ptobj.percent){
+                        LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT",ptobj.percent);
+                    }else{
+                        LODOP.SET_PRINT_MODE("PRINT_PAGE_PERCENT","Auto-Width");
+                    }
+                    break;;
+                }
+            }
+            LODOP.PREVIEW();
+        }
+
+        function exportExcel(){
+            
+            var url = 'https://etax.hunan.chinatax.gov.cn/web-accept//wssb/excel/export.html';
+            var content = $('#sbbdiv').html();
+
+            try{
+                var iframedoc = document.getElementById("dwonlandfile_iframe").contentDocument || document.frames["dwonlandfile_iframe"].document;
+                var fromhtml = "  <html><head></head><body>\n"+
+                        "<form id='dwonlandfile_from'  method='POST' action='https://etax.hunan.chinatax.gov.cn/web-accept//wssb/excel/export.html'>\n"+
+                        "<input type='hidden'  name='sbzldm' value='10435' />\n"+
+                        "<input type='hidden' name='content' value='"+content+"' />\n"+
+                        "<input type='hidden' name='bmc' value='A200000企业所得税月（季）度预缴纳税申报表（A类）;A201030  减免所得税优惠明细表;' />\n"+
+                        "<input type='hidden' name='sssq' value='20191001_20191231' />\n"+
+                        "</form></body></html>";
+                iframedoc.body.innerHTML = fromhtml;
+                iframedoc.getElementById('dwonlandfile_from').submit();
+                setTimeout(checkFileDownloadComplete, 200);
+            }catch(e){
+                $("#tcontent").val(content);
+                var excelurl = 'https://etax.hunan.chinatax.gov.cn/web-accept//wssb/excel/iframeexport.html?t='+(new Date().getTime());
+                $("#dwonlandfile_iframe").attr("src",excelurl);
+            }
+        }
+
+        function checkFileDownloadComplete() {
+            if (document.cookie.toLowerCase().indexOf("filedownload=true") > -1) {
+                closeLoadding();
+                //文件下载成功，删除cookie
+                var cookieData = "fileDownload=; path=/; expires=" + new Date(0).toUTCString() + ";";
+                document.cookie = cookieData;
+                return;
+            }
+            try {
+                var iframedoc = document.getElementById("dwonlandfile_iframe").contentDocument || document.frames["dwonlandfile_iframe"].document;
+                if(iframedoc.body.innerHTML.length==0 || iframedoc.body.innerHTML.indexOf("dwonlandfile_from")==-1){
+                    showErrorMsg("导出失败")
+                    closeLoadding();
+                    return;
+                }
+            } catch (err) {
+                showErrorMsg("导出失败")
+                closeLoadding();
+                return;
+            }
+            setTimeout(checkFileDownloadComplete, 200);
+        }
+    </script>
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?68ac5b26ed794b57976f033d0a7658fe";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+</head>
+<body>
+<input id="ctx" type="hidden" value="https://etax.hunan.chinatax.gov.cn/web-accept/"/>
+<iframe id="dwonlandfile_iframe" style='display: none' src='about:blank'></iframe>
+
+<input type='hidden'  id='tsbzldm' value='10435' />
+<input type='hidden' id='tcontent' value='' />
+<input type='hidden' id='tbmc' value='A200000企业所得税月（季）度预缴纳税申报表（A类）;A201030  减免所得税优惠明细表;' />
+<input type='hidden' id='tsssq' value='20191001_20191231' />
+
+
+<div class="side">
+
+    <div id="outLookBarDiv" name="outLookBarDiv">
+        <table style=" width:200px;" valign="middle" cellpadding="0" cellspacing="0"
+               border="0">
+            <tbody>
+            <tr>
+                <td onmouseover="this.className='menutitleover'" onmouseout="this.className='menutitle'"
+                    class="menutitle"
+                    name="outlooktitle0" id="outlooktitle0" onclick="switchoutlookBar(0)" nowrap="nowrap"><span
+                        class="smallFont" style="display:block; width:100%;">申报表</span></td>
+            </tr>
+            <tr>
+                <td name="outlookdiv0" id="outlookdiv0" style="width:100%;height:100%;" align="center"
+                    valign="top">
+                    <div class="lefttitle" name="outlookdivin0" id="outlookdivin0" style=" width:100%;height:100%">
+                        
+                        <span><a href="javascript:void(0)"
+                                 onclick="openSbb('A200000')">A200000企业所得税月（季）度预缴纳税申报表（A类）
+                        </a></span>
+                        
+                        <span><a href="javascript:void(0)"
+                                 onclick="openSbb('A201030')">A201030  减免所得税优惠明细表
+                        </a></span>
+                        
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="z-click"><i class="iconfont" style="display:none; font-size:9px;" id="you">&#xe72a;</i><i class="iconfont" style=" font-size: 9px;" id="zuo">&#xe72d;</i></div>
+
+<script language="javascript">
+    $(".z-click").click(function(){
+        if($(".side").css("display")=="block"){
+            $(".side").css("display","none");
+            $("#zuo").css("display","none");
+            $("#you").css("display","block");
+            $(".main").css("left","5px");
+            $(this).css("left","5px")
+        }else{
+            $(".side").css("display","block");
+            $("#zuo").css("display","block");
+            $("#you").css("display","none");
+            $(".main").css("left","235px");
+            $(this).css("left","220px")
+        }
+    });
+</script>
+
+
+
+<div class="main" id="sbbdiv">
+    <div id="blankdiv">
+
+    </div>
+    <table>
+        <tr>
+            <td><div style="width:25px;"></div></td>
+            <td>
+                
+                <div id="A200000" style="display: none;">
+                    
+
+
+
+
+<table class="sbbtable" style="width:0px">
+<tr>
+   <td><div style="width:0px;"></div></td>
+   <td><div style="width:27px;"></div></td>
+   <td><div style="width:20px;"></div></td>
+   <td><div style="width:20px;"></div></td>
+   <td><div style="width:35px;"></div></td>
+   <td><div style="width:42px;"></div></td>
+   <td><div style="width:43px;"></div></td>
+   <td><div style="width:45px;"></div></td>
+   <td><div style="width:35px;"></div></td>
+   <td><div style="width:100px;"></div></td>
+   <td><div style="width:200px;"></div></td>
+   <td><div style="width:0px;"></div></td>
+   <td><div style="width:33px;"></div></td>
+   <td><div style="width:34px;"></div></td>
+   <td><div style="width:30px;"></div></td>
+</tr>
+<tr style="height:34px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" bg1 br0"  ></td>
+<td    class=" bg1 br0"   colspan="13"  ></td>
+</tr>
+<tr style="height:42px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" ft0 fs14 fbd ac vm nw bg1 br0"   colspan="12"  >A200000	&nbsp;&nbsp;中华人民共和国企业所得税月（季）度预缴纳税申报表（A类）</td>
+   <td    class=" ft0 fs17 fbd ac vm nw bg1 br0"   colspan="2" ><img src='http://etax.hunan.chinatax.gov.cn:80/web-accept/wssb/qrcde/image.html?qrcode=H%2BfMKgn1pjwbhfvoLrrgN1%2BGUIsRpVu7t0uqdGpGzNW%2FgkgkOWBZBipl9y2byfKSn%2FiOQXZNLmRv%0ACtNUrgSSgnOkhE5Y3ew9yQq%2B7qlraOQTnr6hFXEcV1RmGbjaSD4NiemHeJr6L%2BoJPa7WT%2FxKSciT%0A%2FZttNbkFzYJzY8Yl7SZwAnJAwvFUIRwRE1Rui%2B1Lj788eAvB%2BEwPdUmeJzWr4P3cTPnijU6Zwjui%0AKxKOJmMotHK2%2FqvPLB1kVOUJPOYaScd8gSZ2D5v%2FNoQnWcAoOVzS%2FJe%2By0K5WpNb%2F7qPjMO52lSP%0A6UlVQDOaMiMiISeckZVU5pGgQDbC1SwUw8EMdudpC10TdLBJfxhGWNh2bk5T9M0sggP9Pe8mJYP6%0Af1eu'  /></td>
+</tr>
+<tr style="height:32px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg1 br0"   colspan="14"  >税款所属期间：2019-10-01&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;至&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2019-12-31</td>
+</tr>
+<tr style="height:32px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" ft0 fs12 al vm nw bg1 br0"   colspan="6"  >纳税人识别号（统一社会信用代码）：91430102597555163G</td>
+<td    class=" bg1 br0"   colspan="8"  ></td>
+</tr>
+<tr style="height:32px;" >
+<td    class=" bg1 br0"  ></td>
+   <td    class=" ft0 fs12 al vm nl bg1 br1"   colspan="10"  >纳税人名称：长沙九维矿业有限公司</td>
+   <td    class=" bg1 ar br1"   colspan="4"  >金额单位:人民币元(列至角分)</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br3"   rowspan="2"   colspan="2"  >预缴方式</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   colspan="2"   name="wbsbqysdsa2018a200000.yjfs1"  type="chk,Y,N"  isEditable=false  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   rowspan="2"   colspan="2"  >按照实际利润额预缴</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   name="wbsbqysdsa2018a200000.yjfs2"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   rowspan="2"   colspan="2"  >按照上一纳税年度应纳税所得额平均额预缴</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   name="wbsbqysdsa2018a200000.yjfs3"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   rowspan="2"   colspan="4"  >按照税务机关确定的其他方法预缴</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br0"  ></td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br3"   rowspan="2"   colspan="2"  >企业类型</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   colspan="2"   name="wbsbqysdsa2018a200000.sbqylx1"  type="chk,Y,N"  isEditable=false  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   rowspan="2"   colspan="2"  >一般企业</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   name="wbsbqysdsa2018a200000.sbqylx2"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br0"   colspan="2"  >跨地区经营汇总纳税企业</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   rowspan="2"   name="wbsbqysdsa2018a200000.sbqylx3"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br4"   colspan="4"  >跨地区经营汇总纳税企业</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   colspan="2"  >总机构</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >分支机构</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 fbd ac vm nl bg_ne br2"   colspan="14"  >预缴税款计算</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >行次</td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br2"   colspan="12"  >项&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;目</td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br2"  >本年累计金额</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >1</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >营业收入</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.yysrlj"  format="l18x2d" type="input"  isEditable=false >2,058,384.87</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >2</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >营业成本</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.yycblj"  format="l18x2d" type="input"  isEditable=false >1,949,396.36</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >3</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >利润总额</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.lrzelj"  format="l18x2d" type="input"  isEditable=false >-34,893.72</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >4</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >加：特定业务计算的应纳税所得额</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.tdywjsdynssdelj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >5</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：不征税收入</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.bzssrlj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >6</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：免税收入、减计收入、所得减免等优惠金额（填写A201010）</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.mssrlj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >7</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：固定资产加速折旧（扣除）调减额（填写A201020）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.gdzcjszjkctjelj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >8</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：弥补以前年度亏损</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.mbyqndkslj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >9</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >实际利润额（3+4-5-6-7-8）&nbsp;\&nbsp;按照上一纳税年度应纳税所得额平均额确定的应纳税所得额</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.sjlrelj"  format="l18x2d" type="input"  isEditable=false >-34,893.72</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >10</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >税率(25%)</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.sllj"  format="l18x2bd" type="input"  isEditable=false >25%</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >11</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >应纳所得税额（9×10）</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.ynsdselj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >12</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：减免所得税额（填写A201030）</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.jmsdselj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >13</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：实际已缴纳所得税额</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.sjyyjsdselj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >14</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >减：特定业务预缴（征）所得税额</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.tdywyjzsdselj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >15</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="12"  >本期应补（退）所得税额（11-12-13-14）&nbsp;\&nbsp;税务机关确定的本期应纳所得税额</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.ybtsdselj"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 fbd ac vm nl bg_ne br2"   colspan="14"  >汇总纳税企业总分机构税款计算</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >16</td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br2"   rowspan="4"   colspan="2"  >总机构填报</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="10"  >总机构本期分摊应补（退）所得税额（17+18+19）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.zjgybtsdsebq"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >17</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   colspan="5"  >其中:总机构分摊应补（退）所得税额（15×总机构分摊比例</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.zjgftbl"  format="l18x4b" type="input"  isEditable=false >0%</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >）</td>
+<td    class=" bg_ne br1"  ></td>
+<td    class=" bg_ne br1"  ></td>
+<td    class=" bg_ne br2"  ></td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.zjgyftsdsebq"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >18</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   colspan="5"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;财政集中分配应补（退）所得税额（15×财政集中分配比例</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.zjgczjzftbl"  format="l18x4b" type="input"  isEditable=false >0%</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >）</td>
+<td    class=" bg_ne br1"  ></td>
+<td    class=" bg_ne br1"  ></td>
+<td    class=" bg_ne br2"  ></td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.czjzfpsdsebq"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:52px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >19</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"   colspan="5"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;总机构具有主体生产经营职能的部门分摊所得税额（15×全部分支机构分摊比例</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.fzjgftbl"  format="l18x4b" type="input"  isEditable=false >0%</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >×总机构具有主体生产经营职能部门分摊比例</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.dlscjybmftbl"  format="l18x10b" type="input"  isEditable=false >0%</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  colspan="2" >）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.zjgdlscjybmyftsdsebq"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >20</td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br2"   rowspan="2"   colspan="2"  >分支机构填报</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="10"  >分支机构本期分摊比例</td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   name="wbsbqysdsa2018a200000.fpbl"  format="l18x10b" type="input"  isEditable=false >0%</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"  >21</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="10"  >分支机构本期分摊应补（退）所得税额</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a200000.fzjgfpsdsebq"  format="l18x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 fbd ac vm nw bg_ne br2"   colspan="14"  >附报信息</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >高新技术企业</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sfgxjsqy1"  type="chk,Y,N"  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >是&nbsp;</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sfgxjsqy2"  type="chk,Y,N"  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >否</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="2"  >科技型中小企业</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sfkjxzxqy1"  type="chk,Y,N"  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >是 </td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sfkjxzxqy2"  type="chk,Y,N"  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >否</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >技术入股递延纳税事项</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sffsjsrgdynssx1"  type="chk,Y,N"  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >是&nbsp;</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br1"   name="wbsbqysdsa2018a200000.sffsjsrgdynssx2"  type="chk,Y,N"  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >否</td>
+<td    class=" bg_ne br2"   colspan="6"  ></td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 fbd ac vm nw bg_ne br2"   colspan="14"  >按季度填报信息</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >季初从业人数</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   colspan="4"   name="wbsbqysdsa2018a200000.jccyrs"  format="l18d" type="input"  isEditable=false >2</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="2"  >季末从业人数</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   colspan="4"   name="wbsbqysdsa2018a200000.jmcyrs"  format="l18d" type="input"  isEditable=false >2</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >季初资产总额（万元）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   colspan="4"   name="wbsbqysdsa2018a200000.jczcze"  format="l18x2d" type="input"  isEditable=false >990.10</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="2"  >季末资产总额（万元）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   colspan="4"   name="wbsbqysdsa2018a200000.jmzcze"  format="l18x2d" type="input"  isEditable=false >997.20</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="4"  >国家限制或禁止行业</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.sfgsxzhjzhy1"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >是&nbsp;</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.sfgsxzhjzhy2"  type="chk,Y,N"  isEditable=false  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >否</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="2"  >小型微利企业</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.sfsyxxwlqy1"  type="chk,Y,N"  isEditable=false  value='Y'>☑</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br1"  >是 </td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a200000.sfsyxxwlqy2"  type="chk,Y,N"  isEditable=false  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >否</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br4"  ></td>
+</tr>
+<tr style="height:55px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nl bg_ne br4"   colspan="14"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;谨声明：本纳税申报表是根据国家税收法律法规及相关规定填报的，是真实的、可靠的、完整的。</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 ar vm nl bg_ne br2"   colspan="14"  > 纳税人（签章）：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;年&nbsp;&nbsp;月&nbsp;&nbsp;日</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nw bg_ne br4"   colspan="8"  >经办人：</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br4"   colspan="6"  >受理人：</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nw bg_ne br4"   colspan="8"  >经办人身份证号：</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br4"   colspan="6"  >受理税务机关（章）：</td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nw bg_ne br4"   colspan="8"  >代理机构签章：</td>
+<td    class=" bg_ne br4"   colspan="6"  ></td>
+</tr>
+<tr style="height:23px;" >
+<td    class=" bg1 br4"  ></td>
+<td    class=" ft0 fs12 al vm nw bg_ne br2"   colspan="8"  >代理机构统一社会信用代码：</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br2"   colspan="6"  >受理日期：&nbsp;&nbsp;&nbsp;&nbsp;年&nbsp;&nbsp;月&nbsp;&nbsp;日</td>
+</tr>
+<tr style="height:20px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" ft0 fs11 ar vm nw bg_ne br0"   colspan="14"  >国家税务总局监制</td>
+</tr>
+<tr style="height:18px;" >
+<td    class=" bg1 br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+<td    class=" bg_ne br0"  ></td>
+</tr>
+</table>
+
+                </div>
+                
+                <div id="A201030" style="display: none;">
+                    
+
+
+
+<table class="sbbtable" style="width:0px">
+<tr>
+<td><div style="width:49px;"></div></td>
+<td><div style="width:149px;"></div></td>
+<td><div style="width:32px;"></div></td>
+<td><div style="width:35px;"></div></td>
+<td><div style="width:32px;"></div></td>
+<td><div style="width:106px;"></div></td>
+<td><div style="width:94px;"></div></td>
+<td><div style="width:183px;"></div></td>
+<td><div style="width:130px;"></div></td>
+</tr>
+<tr style="height:18px;" >
+<td    class=" bg1 br0"  ></td>
+</tr>
+<tr style="height:42px;" >
+<td    class=" ft0 fs18 fbd ac vm nw bg1 br1"   colspan="9"  >A201030	减免所得税优惠明细表</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >行次</td>
+<td    class=" ft0 fs12 ac vm nw bg_ne br2"   colspan="7"  >项&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;目</td>
+<td    class=" ft0 fs12 ac vm nl bg_ne br2"  >本年累计金额</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >1</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >一、符合条件的小型微利企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.fhtjdxxwlqyjmqysdslj"  format="l16x2d" type="input" isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >2</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二、国家需要重点扶持的高新技术企业减按15%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.zdfcgxjsqyjmlj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:44px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >3</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >三、经济特区和上海浦东新区新设立的高新技术企业在区内取得的所得定期减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.jjtqpdxqxslgxjsqyjmlj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >4</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >四、受灾地区农村信用社免征企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.szdqncxyslj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >5</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >五、动漫企业自主开发、生产动漫产品定期减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.dmqyzzkflj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >6</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >六、线宽小于0.8微米（含）的集成电路生产企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2" tip="globalErrors.A201030H6Tip"  name="wbsbqysdsa2018a201030.bwmjcdllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >7</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >七、线宽小于0.25微米的集成电路生产企业减按15%税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.ewwmjcdljaswsllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >8</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >八、投资额超过80亿元的集成电路生产企业减按15%税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.bsyyjcdljaswsllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >9</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >九、线宽小于0.25微米的集成电路生产企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H9Tip"  name="wbsbqysdsa2018a201030.ewwmjcdllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >10</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十、投资额超过80亿元的集成电路生产企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2" tip="globalErrors.A201030H10Tip"    name="wbsbqysdsa2018a201030.bsyyjcdllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >11</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十一、线宽小于130纳米的集成电路生产企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H11Tip"   name="wbsbqysdsa2018a201030.xkxyybsnmdjcdlscqyjmlj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >12</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十二、线宽小于65纳米或投资额超过150亿元的集成电路生产企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H12Tip"  name="wbsbqysdsa2018a201030.xkxylwnmhtzecgywlylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >13</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十三、新办集成电路设计企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H13Tip" name="wbsbqysdsa2018a201030.xbjcdlsjqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >14</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十四、国家规划布局内集成电路设计企业可减按10%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.gjghbjjcdljassllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >15</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十五、符合条件的软件企业减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H15Tip" name="wbsbqysdsa2018a201030.fhtjrjqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >16</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十六、国家规划布局内重点软件企业可减按10%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.gjghbjnzdrjqyjassllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >17</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十七、符合条件的集成电路封装、测试企业定期减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"  tip="globalErrors.A201030H17Tip"  name="wbsbqysdsa2018a201030.fhtjjcdlfzcsqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:19px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >18</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十八、符合条件的集成电路关键专用材料生产企业、集成电路专用设备生产企业定期减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2" tip="globalErrors.A201030H18Tip"  name="wbsbqysdsa2018a201030.fhtjjcdlzyclscqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >19</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >十九、经营性文化事业单位转制为企业的免征企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.jyxwhsydwlj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >20</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十、符合条件的生产和装配伤残人员专门用品企业免征企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.fhtjsczpscryyplj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >21</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十一、技术先进型服务企业（服务外包类）减按15%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.jsxjxfwqyjaswsllj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >22</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十二、技术先进型服务企业（服务贸易类）减按15%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.fwmycxfzsdjsxjxfwqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >23</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十三、设在西部地区的鼓励类产业企业减按15%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.xbdqgllqyjaswlj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >24</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十四、新疆困难地区新办企业定期减免企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.xjkndqxbqylj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >25</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十五、新疆喀什、霍尔果斯特殊经济开发区新办企业定期免征企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.xjkstsjjkfqxbqylj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:19px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >26</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十六、广东横琴、福建平潭、深圳前海等地区的鼓励类产业企业减按15%税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.hqptqhgllqylj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >27</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十七、北京冬奥组委、北京冬奥会测试赛赛事组委会免征企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.bjdazwsszwhlj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >28</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >二十八、其他（28.1+28.2）</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.qt"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >28.1</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >&nbsp;&nbsp;&nbsp;&nbsp;1.&nbsp;从事污染防治的第三方企业减按15%的税率征收企业所得税</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.cswrfzddsfqylj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >28.2</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"   colspan="7"  >&nbsp;&nbsp;&nbsp;&nbsp;2.其他</td>
+<td    class=" ft0 fs12 ar vm nw bg0 br2"   name="wbsbqysdsa2018a201030.qt2lj"  format="l16x2d" type="input" >0.00</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"   rowspan="2"  >29</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br4"   colspan="7"  >二十九、民族自治地方的自治机关对本民族自治地方的企业应缴纳的企业所得税中属于地方分享的部分</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   rowspan="2"   name="wbsbqysdsa2018a201030.mzzzdfqydffxbflj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:30px;" >
+<td    class=" ft0 fs12 ac vm nl bg_ne br1"  >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;减征或免征（</td>
+<td    class=" ft0 fs18 ar vm nw bg0 br1"   name="wbsbqysdsa2018a201030.mzck"  type="chk,Y,N"  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br1"  >免征</td>
+<td    class=" ft0 fs18 ar vm nw bg0 br1"   name="wbsbqysdsa2018a201030.jzck"  type="chk,Y,N"  value='N'>☐</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br1"  >减征:减征幅度</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br1"   name="wbsbqysdsa2018a201030.jzfd"  format="l6x4b" type="input"  isEditable=false >0%</td>
+<td    class=" ft0 fs12 al vm nl bg_ne br2"  >&nbsp;）</td>
+</tr>
+<tr style="height:24px;" >
+<td    class=" ft0 fs12 ac vm nw bg_ne br3"  >30</td>
+<td    class=" ft0 fs12 al vm nw bg_ne br2"   colspan="7"  >合计(1+2+3+4+5+6+…+29)</td>
+<td    class=" ft0 fs12 ar vm nw bg_ne br2"   name="wbsbqysdsa2018a201030.hjlj"  format="l16x2d" type="input"  isEditable=false >0.00</td>
+</tr>
+<tr style="height:0px;" >
+</tr>
+</table>
+
+<div id="xwjmxx_div"  style="display: none; overflow-x: auto;padding: 18px">
+   <div style="padding: 15px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;你单位符合小微企业条件，可享受优惠####元，是否确定享受更大的小微企业优惠？</div>
+</div>
+
+                </div>
+                
+            </td>
+            <td><div style="width:25px;"></div></td>
+        </tr>
+    </table>
+</div>
+
+
+<div class="top">
+    <div class="action" >
+        <div class="toolbar" style="text-align:center; padding-top:5px;">
+            <input name="exportbtn" id="exportbtn" type="button" class="btn btn-success" value="导出" title="导出">
+            <input name="printBtn" id="printBtn" type="button" class="btn btn-info" value="打印" title="打印">
+        </div>
+    </div>
+</div>
+
+
+<div id="print_div" style="display: none;padding: 10px;">
+    <table cellpadding="0" border="1px" bordercolor="#CCCCCC" style="width: 100%;">
+        <thead>
+        <tr style="height: 30px;">
+            <th style="width: 10px;"></th>
+            <th style="text-align: center;width: 20px;"><input type="checkbox"  onclick="checkAllprint(this)" id="printChk_allChk"></th>
+            <th style="text-align: left;font-size: 12px;font-weight: normal;padding: 5px;">全选</th>
+        </tr>
+        </thead>
+        <tbody id="print_tbody">
+        
+        <tr>
+            <td style="width: 10px;">1</td>
+            <td style="text-align: center;width: 20px;"><input type="checkbox" onchange="printChkChange()" value="A200000:V:0.75" class="print_ck"></td>
+            <td style="text-align: left;font-size: 12px;">A200000企业所得税月（季）度预缴纳税申报表（A类）</td>
+        </tr>
+        
+        <tr>
+            <td style="width: 10px;">2</td>
+            <td style="text-align: center;width: 20px;"><input type="checkbox" onchange="printChkChange()" value="A201030:V:1" class="print_ck"></td>
+            <td style="text-align: left;font-size: 12px;">A201030  减免所得税优惠明细表</td>
+        </tr>
+        
+
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

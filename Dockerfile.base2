@@ -1,0 +1,7 @@
+FROM registry.cn-shanghai.aliyuncs.com/dqg/tax:crawl-3.7alpine-base-v5
+#RUN apk add tzdata
+#RUN apk add nodejs
+#RUN ls /usr/share/zoneinfo
+#RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+#RUN echo "Asia/Shanghai" >  /etc/timezone
+RUN pip install flower==0.9.2
