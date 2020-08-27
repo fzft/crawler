@@ -1,11 +1,13 @@
 ## Requirements
 * Python 3.6
+* celery
 * aioredis
 * aiomongodel
 * motor
 * aiohttp
 * aiojobs
 * aioprometheusGetBill
+
 
 ## version
 * dqg-tax_crawl-v14[prod]
